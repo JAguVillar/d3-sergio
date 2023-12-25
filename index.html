@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>Document</title>
+  </head>
+  <body>
+    <svg width="600" height="600"></svg>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.9.1/d3.min.js"></script>
+    <script type="module">
+      var svg = d3.select("svg"),
+        width = +svg.attr("width"),
+        height = +svg.attr("height");
+
+      var color = d3.scaleOrdinal(d3.schemeCategory20);
+
+      var simulation = d3
+        .forceSimulation()
+        .force(
+          "link",
+          d3
+            .forceLink()
+            .id(function (d) {
+              console.log(d);
+              return d.name;
+            })
+            .strength(0.01)
+        )
+        .force("charge", d3.forceManyBody())
+        .force("center", d3.forceCenter(width / 2, height / 2));
+
+      var graph = getData();
+
+      graph.links = graph.links.map(function (ele) {
+        return {
+          source: ele.source,
+          target: ele.dest,
+        };
+      });
+
+      var link = svg
+        .append("g")
+        .attr("class", "links")
+        .selectAll("line")
+        .data(graph.links)
+        .enter()
+        .append("line")
+        .attr("stroke-width", function (d) {
+          return Math.sqrt(d.value);
+        });
+
+      var node = svg
+        .append("g")
+        .attr("class", "nodes")
+        .selectAll("g")
+        .data(graph.nodes)
+        .enter()
+        .append("g");
+
+      var circles = node
+        .append("circle")
+        .attr("r", 3)
+        .attr("fill", function (d) {
+          return color(d.estado);
+        })
+        .call(
+          d3
+            .drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended)
+        );
+
+      var lables = node
+        .append("text")
+        .text(function (d) {
+          return d.estado;
+        })
+        .attr("x", 6)
+        .attr("y", 6);
+
+      node.append("title").text(function (d) {
+        return d.name;
+      });
+
+      simulation.nodes(graph.nodes).on("tick", ticked);
+
+      simulation.force("link").links(graph.links);
+
+      function ticked() {
+        link
+          .attr("x1", function (d) {
+            return d.source.x;
+          })
+          .attr("y1", function (d) {
+            return d.source.y;
+          })
+          .attr("x2", function (d) {
+            return d.target.x;
+          })
+          .attr("y2", function (d) {
+            return d.target.y;
+          });
+
+        node.attr("transform", function (d) {
+          return "translate(" + d.x + "," + d.y + ")";
+        });
+      }
+
+      function dragstarted(d) {
+        if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+      }
+
+      function dragged(d) {
+        d.fx = d3.event.x;
+        d.fy = d3.event.y;
+      }
+
+      function dragended(d) {
+        if (!d3.event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+      }
+
+      function getData() {
+        const array = [
+          {
+            final: 0,
+            inicial: 1,
+            destinos: [
+              {
+                areas: [{ id: 6, nombre: "Junta médica" }],
+                roles: [
+                  { id: 1, nombre: "SUPERADMINISTRADOR" },
+                  { id: 2, nombre: "Prueba" },
+                  { id: 3, nombre: "Admision" },
+                  { id: 4, nombre: "Director" },
+                ],
+                estadoID: 2,
+                estadoNombre: "Derivado a Junta Médica",
+              },
+              {
+                areas: null,
+                roles: [
+                  { id: 1, nombre: "SUPERADMINISTRADOR" },
+                  { id: 4, nombre: "Director" },
+                ],
+                estadoID: 5,
+                estadoNombre: "Aprobado",
+              },
+              {
+                areas: null,
+                roles: [
+                  { id: 1, nombre: "SUPERADMINISTRADOR" },
+                  { id: 4, nombre: "Director" },
+                ],
+                estadoID: 6,
+                estadoNombre: "Rechazado",
+              },
+            ],
+            estadoID: 1,
+            maxTiempo: null,
+            estadoNombre: "Recibido en Admisión",
+          },
+          {
+            final: 0,
+            inicial: 0,
+            destinos: [
+              {
+                areas: [{ id: 6, nombre: "Junta médica" }],
+                roles: [
+                  { id: 1, nombre: "SUPERADMINISTRADOR" },
+                  { id: 2, nombre: "Prueba" },
+                  { id: 4, nombre: "Director" },
+                  { id: 5, nombre: "Junta medica" },
+                ],
+                estadoID: 3,
+                estadoNombre: "Justificado en Junta Médica",
+              },
+              {
+                areas: [{ id: 6, nombre: "Junta médica" }],
+                roles: [
+                  { id: 1, nombre: "SUPERADMINISTRADOR" },
+                  { id: 2, nombre: "Prueba" },
+                  { id: 4, nombre: "Director" },
+                  { id: 5, nombre: "Junta medica" },
+                ],
+                estadoID: 4,
+                estadoNombre: "Injustificado en Junta Médica",
+              },
+              {
+                areas: null,
+                roles: [
+                  { id: 1, nombre: "SUPERADMINISTRADOR" },
+                  { id: 4, nombre: "Director" },
+                ],
+                estadoID: 5,
+                estadoNombre: "Aprobado",
+              },
+              {
+                areas: null,
+                roles: [
+                  { id: 1, nombre: "SUPERADMINISTRADOR" },
+                  { id: 4, nombre: "Director" },
+                ],
+                estadoID: 6,
+                estadoNombre: "Rechazado",
+              },
+            ],
+            estadoID: 2,
+            maxTiempo: null,
+            estadoNombre: "Derivado a Junta Médica",
+          },
+          {
+            final: 0,
+            inicial: 0,
+            destinos: [
+              {
+                areas: null,
+                roles: [
+                  { id: 1, nombre: "SUPERADMINISTRADOR" },
+                  { id: 4, nombre: "Director" },
+                ],
+                estadoID: 5,
+                estadoNombre: "Aprobado",
+              },
+              {
+                areas: null,
+                roles: [
+                  { id: 1, nombre: "SUPERADMINISTRADOR" },
+                  { id: 4, nombre: "Director" },
+                ],
+                estadoID: 6,
+                estadoNombre: "Rechazado",
+              },
+              {
+                areas: [
+                  { id: 6, nombre: "Junta médica" },
+                  { id: 7, nombre: "Director" },
+                ],
+                roles: [
+                  { id: 1, nombre: "SUPERADMINISTRADOR" },
+                  { id: 2, nombre: "Prueba" },
+                  { id: 4, nombre: "Director" },
+                  { id: 5, nombre: "Junta medica" },
+                ],
+                estadoID: 7,
+                estadoNombre: "Revision director",
+              },
+            ],
+            estadoID: 3,
+            maxTiempo: null,
+            estadoNombre: "Justificado en Junta Médica",
+          },
+          {
+            final: 0,
+            inicial: 0,
+            destinos: [
+              {
+                areas: null,
+                roles: [
+                  { id: 1, nombre: "SUPERADMINISTRADOR" },
+                  { id: 4, nombre: "Director" },
+                ],
+                estadoID: 5,
+                estadoNombre: "Aprobado",
+              },
+              {
+                areas: null,
+                roles: [
+                  { id: 1, nombre: "SUPERADMINISTRADOR" },
+                  { id: 4, nombre: "Director" },
+                ],
+                estadoID: 6,
+                estadoNombre: "Rechazado",
+              },
+              {
+                areas: [{ id: 7, nombre: "Director" }],
+                roles: [
+                  { id: 1, nombre: "SUPERADMINISTRADOR" },
+                  { id: 2, nombre: "Prueba" },
+                  { id: 4, nombre: "Director" },
+                  { id: 5, nombre: "Junta medica" },
+                ],
+                estadoID: 7,
+                estadoNombre: "Revision director",
+              },
+            ],
+            estadoID: 4,
+            maxTiempo: null,
+            estadoNombre: "Injustificado en Junta Médica",
+          },
+          {
+            final: 1,
+            inicial: 0,
+            destinos: null,
+            estadoID: 5,
+            maxTiempo: null,
+            estadoNombre: "Aprobado",
+          },
+          {
+            final: 1,
+            inicial: 0,
+            destinos: null,
+            estadoID: 6,
+            maxTiempo: null,
+            estadoNombre: "Rechazado",
+          },
+          {
+            final: 0,
+            inicial: 0,
+            destinos: [
+              {
+                areas: [{ id: 6, nombre: "Junta médica" }],
+                roles: [
+                  { id: 1, nombre: "SUPERADMINISTRADOR" },
+                  { id: 2, nombre: "Prueba" },
+                  { id: 4, nombre: "Director" },
+                  { id: 5, nombre: "Junta medica" },
+                ],
+                estadoID: 3,
+                estadoNombre: "Justificado en Junta Médica",
+              },
+              {
+                areas: [{ id: 6, nombre: "Junta médica" }],
+                roles: [
+                  { id: 1, nombre: "SUPERADMINISTRADOR" },
+                  { id: 2, nombre: "Prueba" },
+                  { id: 4, nombre: "Director" },
+                  { id: 5, nombre: "Junta medica" },
+                ],
+                estadoID: 4,
+                estadoNombre: "Injustificado en Junta Médica",
+              },
+              {
+                areas: null,
+                roles: [
+                  { id: 1, nombre: "SUPERADMINISTRADOR" },
+                  { id: 4, nombre: "Director" },
+                ],
+                estadoID: 5,
+                estadoNombre: "Aprobado",
+              },
+              {
+                areas: null,
+                roles: [
+                  { id: 1, nombre: "SUPERADMINISTRADOR" },
+                  { id: 4, nombre: "Director" },
+                ],
+                estadoID: 6,
+                estadoNombre: "Rechazado",
+              },
+            ],
+            estadoID: 7,
+            maxTiempo: null,
+            estadoNombre: "Revision director",
+          },
+        ];
+        let nodes = [];
+        let links = [];
+        array.forEach((element) => {
+          nodes.push({
+            name: element.estadoID.toString(),
+            estado: element.estadoNombre,
+          });
+          if (element.destinos) {
+            element.destinos.forEach((e) => {
+              links.push({
+                source: element.estadoID.toString(),
+                dest: e.estadoID.toString(),
+              });
+            });
+          }
+        });
+
+        let json = {
+          nodes,
+          links,
+        };
+        // let json = {
+        //   nodes: [
+        //     { name: "1" },
+        //     { name: "2" },
+        //     { name: "3" },
+        //     { name: "4" },
+        //     { name: "5" },
+        //   ],
+        //   links: [
+        //     {
+        //       source: "1",
+        //       dest: "2",
+        //       value: "10",
+        //     },
+        //     { source: "1", dest: "3", value: "10" },
+        //     {
+        //       source: "1",
+        //       dest: "4",
+        //       value: "30",
+        //     },
+        //     {
+        //       source: "1",
+        //       dest: "5",
+        //       value: "10",
+        //     },
+        //     {
+        //       source: "5",
+        //       dest: "1",
+        //       value: "10",
+        //     },
+        //   ],
+        // };
+
+        return json;
+      }
+    </script>
+  </body>
+</html>
